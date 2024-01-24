@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 from itertools import cycle
 from impresion_qrs import ImpresionQRWindow
+from lectura_qrs import LecturaQRWindow
 import csv
+import sys
 
 
 def digito_verificador(rut):
@@ -61,6 +63,10 @@ class CRUDApp:
         self.btn_imprimir_qrs= tk.Button(root, text='Imprimir QRs', command=self.abrir_ventana_imprimir)
         self.btn_imprimir_qrs.pack()
 
+        # Botón para abrir la ventana de lectura de QRs
+        self.btn_leer_qrs = tk.Button(root, text='Leer QRs', command=self.abrir_ventana_leer_qrs)
+        self.btn_leer_qrs.pack()
+
         # Cargar datos desde el archivo CSV
         self.cargar_datos()
 
@@ -73,10 +79,14 @@ class CRUDApp:
         else:
             tk.messagebox.showwarning("Advertencia", "No hay datos disponibles para imprimir QRs.")
 
+    def abrir_ventana_leer_qrs(self):
+        # Abre la ventana de lectura de QRs
+        LecturaQRWindow()
+
     def obtener_datos_columna(self, columnas):
         # Función para obtener datos de columnas específicas del archivo CSV
         try:
-            with open('datos.csv', 'r', newline='') as file:
+            with open('data/datos.csv', 'r', newline='') as file:
                 reader = csv.DictReader(file)
                 return [dict(row) for row in reader]
         except FileNotFoundError:
@@ -85,7 +95,7 @@ class CRUDApp:
 
     def cargar_datos(self):
         try:
-            with open('datos.csv', 'r', newline='') as file:
+            with open('data/datos.csv', 'r', newline='') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     self.tree.insert('', 'end', values=(row['id'], row['rut'], row['digito'], row['nombre']))
@@ -94,7 +104,7 @@ class CRUDApp:
             pass
 
     def guardar_datos(self):
-        with open('datos.csv', 'w', newline='') as file:
+        with open('data/datos.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['id', 'rut', 'digito', 'nombre'])
             for child in self.tree.get_children():
@@ -119,11 +129,12 @@ class CRUDApp:
 
             if rut_entero > 0 and digito_entero >= 0 and nombre:
                 if digito_verificador(rut_entero) == digito_entero:
-                    id = len(self.tree.get_children()) + 1
-                    self.tree.insert('', 'end', values=(id, rut, digito, nombre))
+                    # Obtener el próximo ID con formato de tres dígitos
+                    nuevo_id = f"{len(self.tree.get_children()) + 1:03d}"
+                    self.tree.insert('', 'end', values=(nuevo_id, rut, digito, nombre))
                     self.guardar_datos()
                 else:
-                    print("El digito verificador no coincide")
+                    print("El dígito verificador no coincide")
             else:
                 print("Los valores de RUT y Dígito deben ser números enteros no negativos.")
         except ValueError:
