@@ -31,6 +31,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\data\lecturas2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\data\llaves.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\data\resumen.csv">
           <value>
             <Attribute>
