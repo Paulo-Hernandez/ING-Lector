@@ -10,6 +10,11 @@ from datetime import datetime
 import sys
 import os
 from collections import defaultdict
+from config import verificacion
+
+
+if verificacion() == False:
+       sys.exit()
 
 
 class LecturaQRWindow:
@@ -32,6 +37,15 @@ class LecturaQRWindow:
 
         # Etiqueta para mostrar la fecha
         tk.Label(self.root, text=f"Fecha de Lecturas: {fecha_actual}").pack()
+
+        self.lectura_cont = 0
+
+        # StringVar para almacenar el valor de lectura_cont
+        self.lectura_cont_var = tk.StringVar()
+        self.lectura_cont_var.set(f"Lecturas de QR: {self.lectura_cont}")
+
+        # Label para mostrar el número de lecturas de QR
+        tk.Label(self.root, textvariable=self.lectura_cont_var, foreground="white", font=("Arial", 15)).pack()
 
         # Crear Treeview para mostrar los resultados en forma de tabla
         self.tree = ttk.Treeview(self.root,
@@ -121,10 +135,35 @@ class LecturaQRWindow:
         self.thread_console.start()
 
         # Cargar datos iniciales
-        self.cargar_datos()
+        # self.cargar_datos()
+
+        # Llamar a la función actualizar_treeview cada segundo
+        self.root.after(1000, self.actualizar_treeview_from_csv)
 
         self.root.mainloop()
 
+    def actualizar_treeview_from_csv(self):
+        try:
+            # Cargar los datos del archivo resumen2.csv
+            df_resumen = pd.read_csv('data/resumen2.csv')
+
+            # Limpiar el Treeview antes de actualizarlo
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+
+            # Iterar sobre los datos y actualizar el Treeview
+            for index, row in df_resumen.iterrows():
+                id_persona = row['id']
+                cantidad_acumulada = row['Cantidad']
+                cantidad_diaria = row['Cantidad Diaria']
+                ultimo_leido = row['ultimo_leido']
+                self.actualizar_treeview(id_persona, cantidad_acumulada, cantidad_diaria, ultimo_leido)
+
+        except FileNotFoundError:
+            print("Archivo resumen2.csv no encontrado.")
+
+        # Programar la próxima actualización después de 1 segundo
+        self.root.after(1000, self.actualizar_treeview_from_csv)
     def escribir_fecha(self, fecha):
         try:
             with open('data/fechas.csv', 'a', newline='') as file:
@@ -176,9 +215,56 @@ class LecturaQRWindow:
             # Eliminacion de duplicados
             df_concat = df_concat[~df_concat.duplicated(subset=['ultimo_leido'])]
 
+            self.generar_resumen_info(df_concat)
+
+
+
+
         except FileNotFoundError:
             print("Archivo no encontrado. Asegúrate de tener los archivos necesarios.")
 
+    def generar_resumen_info(self,df_combined):
+        try:
+            # Cargar datos del archivo datos.csv
+            datos_df = pd.read_csv('data/datos.csv', encoding='latin1')
+
+            # Crear un DataFrame para el resumen
+            resumen_df = pd.DataFrame(columns=['id', 'nombre', 'Cantidad', 'ultimo_leido'])
+
+            # Iterar sobre cada ID en datos.csv
+            for index, row in datos_df.iterrows():
+                id_persona = row['id']
+                nombre = row['nombre']
+
+                # Verificar si la columna 'ID Persona' está presente en df_combined
+                if 'ID Persona' in df_combined.columns:
+                    # Filtrar el DataFrame combinado por ID
+                    df_filtrado = df_combined[df_combined['ID Persona'] == id_persona]
+                else:
+                    # Si 'ID Persona' no existe, intentar buscar una columna similar
+                    persona_column = [col for col in df_combined.columns if 'persona' in col.lower()]
+                    if persona_column:
+                        df_filtrado = df_combined[df_combined[persona_column[0]] == id_persona]
+                    else:
+                        print(f"No se encontró la columna para ID {id_persona}")
+                        continue
+
+                # Calcular la cantidad de filas y obtener el máximo de 'ultimo Leído'
+                cantidad = len(df_filtrado)
+                ultimo_leido = df_filtrado['ultimo_leido'].max()
+
+                # Crear un DataFrame temporal con la información actual
+                temp_df = pd.DataFrame(
+                    {'id': [id_persona], 'nombre': [nombre], 'Cantidad': [cantidad], 'ultimo_leido': [ultimo_leido]})
+
+                # Concatenar el DataFrame temporal a resumen_df
+                resumen_df = pd.concat([resumen_df, temp_df], ignore_index=True)
+                resumen_df.to_csv('data/resumen2.csv')
+
+            print("Archivo resumen.csv generado correctamente.")
+
+        except FileNotFoundError:
+            print("Archivo no encontrado. Asegúrate de tener los archivos necesarios.")
     def obtener_rut(self, id_persona):
         # Cargar datos desde datos.csv
         try:
@@ -241,6 +327,8 @@ class LecturaQRWindow:
         while True:
             if self.bucle_activo:
                 qr = input("Ingrese el código QR: ")
+                self.lectura_cont = self.lectura_cont+1
+                self.lectura_cont_var.set(f"Lecturas de QR: {self.lectura_cont}")
                 self.console_queue.put(qr)
             time.sleep(0.1)
 
@@ -274,7 +362,6 @@ class LecturaQRWindow:
             pass
 
     def actualizar_resultados(self, qr):
-        self.generar_resumen()
         if len(qr) != 9 or qr in self.filtro_eventos:
             return
 
@@ -342,6 +429,7 @@ class LecturaQRWindow:
 
     def contar_qr(self, id_persona):
         if id_persona not in self.qr_contados_acumulado:
+            self.qr_contados_acumulado[id_persona] = 1
             # Verificar si el ID de persona ya existe en el archivo CSV
             if not self.id_persona_existe_en_csv(id_persona):
                 # Si no existe, contar el primer QR

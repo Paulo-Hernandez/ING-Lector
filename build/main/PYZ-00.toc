@@ -477,6 +477,10 @@
    'C:\\Users\\PC\\PycharmProjects\\generacion de '
    'qr\\.venv\\lib\\site-packages\\babel\\localtime\\_win32.py',
    'PYMODULE'),
+  ('babel.numbers',
+   'C:\\Users\\PC\\PycharmProjects\\generacion de '
+   'qr\\.venv\\lib\\site-packages\\babel\\numbers.py',
+   'PYMODULE'),
   ('babel.plural',
    'C:\\Users\\PC\\PycharmProjects\\generacion de '
    'qr\\.venv\\lib\\site-packages\\babel\\plural.py',

@@ -9,6 +9,7 @@ import base64
 import hashlib
 
 
+
 def obtener_direccion_mac():
     try:
         direccion_mac = '-'.join(['{:02X}'.format(int(x, 16)) for x in ('{:012X}'.format(uuid.getnode())[i:i+2] for i in range(0, 12, 2))])
@@ -50,14 +51,13 @@ def verificacion():
     df = pd.read_csv("data\llaves.csv")
     nombrecol = 'KEY'
     texto_cifrado_lista = df[nombrecol].tolist()
-
+    # Dirección MAC
+    dire = obtener_direccion_mac()
     # Iterar a través de la lista y descifrar cada cadena
     for texto_cifrado in texto_cifrado_lista:
         # Descifrar el texto
         texto_descifrado = decrypt_string(texto_cifrado, clave)
 
-        # Dirección MAC
-        dire = obtener_direccion_mac()
 
         if dire in texto_descifrado:
             return True
@@ -65,12 +65,10 @@ def verificacion():
     return False
 
 
-
 class PrinterInfoWindow:
     def __init__(self, root):
         self.root = root
         self.root.title("Información de la Impresora")
-
 
         # Obtener la impresora predeterminada
         default_printer = GetDefaultPrinter()

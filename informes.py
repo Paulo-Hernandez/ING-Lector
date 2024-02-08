@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkcalendar import DateEntry
+from tkcalendar import Calendar, DateEntry
 from tkinter import ttk
 import pandas as pd
 import os
@@ -137,7 +137,7 @@ class VentanaInformes:
     def generar_resumen_info(self,df_combined):
         try:
             # Cargar datos del archivo datos.csv
-            datos_df = pd.read_csv('data/datos.csv')
+            datos_df = pd.read_csv('data/datos.csv', encoding='latin1')
 
             # Crear un DataFrame para el resumen
             resumen_df = pd.DataFrame(columns=['id', 'nombre', 'Cantidad', 'ultimo_leido'])
@@ -184,4 +184,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = VentanaInformes(root)
     root.mainloop()
-

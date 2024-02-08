@@ -52,8 +52,8 @@ class ImpresionQRWindow:
                 else:
                     tk.messagebox.showwarning("Advertencia",
                                               f"No hay filas para el ID de persona {id_persona}. "
-                                              f"Se empezará por el 001")
-                    return "001"
+                                              f"Se empezará por el 000001")
+                    return "000001"
 
         except FileNotFoundError:
             tk.messagebox.showerror("Error", "El archivo 'lecturas.csv' no se encuentra.")
@@ -68,6 +68,7 @@ class ImpresionQRWindow:
                 cantidad = self.cantidad_qrs.get()
                 cantidad = int(cantidad) + (3 - int(cantidad)%3)%3
                 cod_impresion = str(id_persona_ingresado) + str(ultimo_correlativo).zfill(6) + str(cantidad).zfill(3)
+                self.guardar_datos_en_csv()
                 self.llamar_aplicacion_externa(cod_impresion)
         else:
             tk.messagebox.showwarning("Advertencia", f"El ID {id_persona_ingresado} no existe en los datos.")
@@ -105,11 +106,10 @@ class ImpresionQRWindow:
                     writer.writeheader()
 
                 # Escribe la nueva fila
-                nueva_fila = {'rut': self.id_persona.get(), 'cantidad': self.cantidad_qrs.get(),
+                nueva_fila = {'id': self.id_persona.get(), 'cantidad': self.cantidad_qrs.get(),
                               'fecha_impresion': datetime.now().strftime("%Y-%m-%d %H:%M")}
                 writer.writerow(nueva_fila)
         except Exception as e:
             tk.messagebox.showerror("Error al guardar datos en CSV: {str(e)}")
-
 
 
